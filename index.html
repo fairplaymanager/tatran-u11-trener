@@ -12,7 +12,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#1F8B3F">
-<link rel="manifest" href="manifest.json">
+<!-- Pozn.: ŽIADNY manifest. start_url v manifeste by iOS použil pri spustení
+     z plochy a zahodil by ?token=… Token držíme cez URL + localStorage. -->
 <style>
   *{box-sizing:border-box}
   html,body{margin:0;min-height:100%}
@@ -23,37 +24,63 @@
   img.ic{width:108px;height:108px;border-radius:24px;box-shadow:0 8px 24px rgba(0,0,0,.3);margin-bottom:18px}
   h1{font-size:26px;font-weight:800;margin:0 0 4px}
   p.sub{font-size:15px;opacity:.9;margin:0 0 26px}
-  a.btn{display:inline-block;background:#fff;color:#0F5A28;font-weight:700;font-size:18px;
-    text-decoration:none;padding:15px 30px;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+  a.btn,button.btn{display:inline-block;background:#fff;color:#0F5A28;font-weight:700;font-size:18px;
+    text-decoration:none;padding:15px 30px;border-radius:14px;border:0;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer}
   a.btn.off{opacity:.45;pointer-events:none}
   .hint{margin-top:30px;font-size:13px;opacity:.82;line-height:1.5;max-width:340px}
-  .warn{background:rgba(0,0,0,.22);border-radius:12px;padding:12px 14px}
+  .warn{background:rgba(0,0,0,.22);border-radius:12px;padding:14px 16px}
+  .tokbox{margin-top:8px;display:flex;gap:8px;flex-direction:column;align-items:center}
+  .tokbox input{font-size:16px;padding:12px 14px;border-radius:12px;border:0;width:260px;text-align:center;letter-spacing:1px}
+  .hidden{display:none}
 </style>
 <script>
-  // Token-passthrough: token sa NIKDY neukladá v tomto repe. Číta sa z URL
-  // tohto launchera (…/?token=XXX) a pridá sa do GAS odkazu. Token žije len
-  // v osobnej domovskej záložke trénera.
+  // Token-passthrough + zapamätanie. Token sa NIKDY neukladá v repe — len v URL
+  // tohto launchera a v localStorage zariadenia (per-tréner).
   var BASE = "https://script.google.com/macros/s/AKfycbwtY15tDDfX4dz4hZm6WrcuabCfweVtyr3RiCv65wQD1e9Cy99SkR86EOz3U1t5ogm3/exec?view=trener";
-  function getTok(){ var m = location.search.match(/[?&]token=([^&]+)/); return m ? decodeURIComponent(m[1]) : ""; }
-  var TOKEN = getTok();
+  var LS_KEY = "u11_trener_token";
+  function getTokFromUrl(){ var m = location.search.match(/[?&]token=([^&]+)/); return m ? decodeURIComponent(m[1]) : ""; }
+  var TOKEN = getTokFromUrl();
+  try {
+    if (TOKEN) { localStorage.setItem(LS_KEY, TOKEN); }      // ulož pri prvom otvorení s tokenom
+    else { TOKEN = localStorage.getItem(LS_KEY) || ""; }      // inak skús zapamätaný
+  } catch (e) {}
   var TARGET = TOKEN ? (BASE + "&token=" + encodeURIComponent(TOKEN)) : BASE;
-  // Standalone (spustené z plochy) → rovno otvor trénerskú webapp.
-  if (window.navigator.standalone === true && TOKEN) { location.replace(TARGET); }
+  var STANDALONE = (window.navigator.standalone === true);
+  // Spustené z plochy a token máme → rovno otvor appku.
+  if (STANDALONE && TOKEN) { location.replace(TARGET); }
 </script>
 </head>
 <body>
   <img class="ic" src="apple-touch-icon.png?v=1" alt="U11 Tréner">
   <h1>U11 — Tréner</h1>
   <p class="sub">Správa nominácií · FC Tatran Prešov</p>
+
   <a class="btn" id="openBtn" href="#">Otvoriť →</a>
+
   <div class="hint" id="hint">📲 Pridaj na plochu: ťukni <b>Zdieľať</b> → <b>Pridať na plochu</b>.</div>
+
+  <!-- Záložné vloženie tokenu (ak by chýbal v URL aj v pamäti) -->
+  <div class="hint warn hidden" id="tokWarn">
+    Zadaj svoj <b>prístupový token</b> (nájdeš ho v trénerskej appke → ⚙️ Nastavenia). Zapamätá sa na tomto zariadení.
+    <div class="tokbox">
+      <input id="tokInput" placeholder="napr. 2DFF2D3FE37B" autocapitalize="characters" autocorrect="off" spellcheck="false">
+      <button class="btn" id="tokSave">Uložiť a otvoriť →</button>
+    </div>
+  </div>
+
   <script>
     document.getElementById('openBtn').href = TARGET;
     if (!TOKEN) {
+      // Token chýba (URL aj pamäť) → skry „Otvoriť", ukáž vkladacie pole.
       document.getElementById('openBtn').className = 'btn off';
-      document.getElementById('hint').className = 'hint warn';
-      document.getElementById('hint').innerHTML =
-        '⚠️ V adrese chýba <b>token</b>. Použi odkaz v tvare<br><b>…/?token=TVOJTOKEN</b><br>(token nájdeš v trénerskej appke → ⚙️ Nastavenia).';
+      document.getElementById('hint').classList.add('hidden');
+      document.getElementById('tokWarn').classList.remove('hidden');
+      document.getElementById('tokSave').addEventListener('click', function(){
+        var t = (document.getElementById('tokInput').value || '').trim();
+        if (!t) return;
+        try { localStorage.setItem(LS_KEY, t); } catch(e){}
+        location.replace(BASE + "&token=" + encodeURIComponent(t));
+      });
     }
   </script>
 </body>
