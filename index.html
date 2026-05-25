@@ -13,10 +13,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#1F8B3F">
 <!-- Pozn.: ŽIADNY manifest. start_url v manifeste by iOS použil pri spustení
-     z plochy a zahodil by ?token=… Token držíme cez URL + localStorage. -->
+     z plochy a zahodil by ?token=… Token držíme cez URL + localStorage.
+     Standalone rieši apple-mobile-web-app-capable (manifest netreba). -->
 <style>
   *{box-sizing:border-box}
-  html,body{margin:0;min-height:100%}
+  html,body{margin:0;height:100%;min-height:100%}
   body{background:linear-gradient(160deg,#0F5A28,#1F8B3F 55%,#23A14B);
     color:#fff;font-family:-apple-system,'Helvetica Neue',Helvetica,Arial,sans-serif;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -32,10 +33,27 @@
   .tokbox{margin-top:8px;display:flex;gap:8px;flex-direction:column;align-items:center}
   .tokbox input{font-size:16px;padding:12px 14px;border-radius:12px;border:0;width:260px;text-align:center;letter-spacing:1px}
   .hidden{display:none}
+
+  /* [PoC iframe-embed] Standalone shell — top-level zostáva github.io (zachová
+     standalone bez Safari chrome), trénerská appka sa renderuje vo fullscreen iframe
+     (token cez iframe.src). Safe-area padding → obsah nelezie pod notch/home indicator. */
+  #appwrap{position:fixed;inset:0;z-index:1000;display:none;background:#1F8B3F;
+    padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);
+    padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+  #appframe{display:block;width:100%;height:100%;border:0}
+  #splash{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:16px;background:#1F8B3F;color:#fff;
+    transition:opacity .3s;pointer-events:none}
+  #splash.hide{opacity:0}
+  #splash img{width:92px;height:92px;border-radius:22px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+  .spin{width:34px;height:34px;border:4px solid rgba(255,255,255,.35);border-top-color:#fff;
+    border-radius:50%;animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  html.embed,body.embed{overflow:hidden}
 </style>
 <script>
   // Token-passthrough + zapamätanie. Token sa NIKDY neukladá v repe — len v URL
-  // tohto launchera a v localStorage zariadenia (per-tréner).
+  // tohto launchera a v localStorage zariadenia (per-tréner, na origine launchera).
   var BASE = "https://script.google.com/macros/s/AKfycbwtY15tDDfX4dz4hZm6WrcuabCfweVtyr3RiCv65wQD1e9Cy99SkR86EOz3U1t5ogm3/exec?view=trener";
   var LS_KEY = "u11_trener_token";
   function getTokFromUrl(){ var m = location.search.match(/[?&]token=([^&]+)/); return m ? decodeURIComponent(m[1]) : ""; }
@@ -46,11 +64,33 @@
   } catch (e) {}
   var TARGET = TOKEN ? (BASE + "&token=" + encodeURIComponent(TOKEN)) : BASE;
   var STANDALONE = (window.navigator.standalone === true);
-  // Spustené z plochy a token máme → rovno otvor appku.
-  if (STANDALONE && TOKEN) { location.replace(TARGET); }
+  // [PoC] Spustené z plochy a token máme → NErobíme cross-origin redirect (ten by
+  // vyhodil appku do Safari s chrome). Namiesto toho appku vložíme do fullscreen
+  // iframe; top-level zostane na github.io → standalone bez pásov. Token ide cez src.
+  // Standalone bez tokenu / bežné Safari → landing page nižšie (button / token input).
+  if (STANDALONE && TOKEN) {
+    document.documentElement.className += " embed";
+    document.addEventListener("DOMContentLoaded", function(){
+      document.body.className += " embed";
+      var wrap = document.getElementById("appwrap");
+      var frame = document.getElementById("appframe");
+      var splash = document.getElementById("splash");
+      if (!wrap || !frame) return;
+      wrap.style.display = "block";
+      frame.addEventListener("load", function(){ if (splash) splash.className = "hide"; });
+      frame.src = TARGET;
+    });
+  }
 </script>
 </head>
 <body>
+  <!-- Standalone + token: fullscreen iframe shell (skrytý kým JS nezistí standalone) -->
+  <div id="appwrap">
+    <div id="splash"><img src="apple-touch-icon.png?v=1" alt=""><div class="spin"></div></div>
+    <iframe id="appframe" title="U11 — Tréner" allow="clipboard-write"></iframe>
+  </div>
+
+  <!-- Bežné Safari / standalone bez tokenu: landing page -->
   <img class="ic" src="apple-touch-icon.png?v=1" alt="U11 Tréner">
   <h1>U11 — Tréner</h1>
   <p class="sub">Správa nominácií · FC Tatran Prešov</p>
