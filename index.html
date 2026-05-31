@@ -100,9 +100,18 @@
         frame.style.transform = "scale(" + s + ")";
       }
       fit();
+      // [bottom-nav robust] re-fit na settle-pointoch: env(safe-area-inset-*) (a tým
+      // content-box clientHeight) sa pri standalone cold-launchi nemusí resolvnúť hneď
+      // na DOMContentLoaded → jednorazový fit by chytil padding=0, iframe by ostal
+      // nadrozmerný a fixed #tabbar orezaný (žiadny ďalší re-fit by neprišiel). fit() je
+      // idempotentné, takže opakované volanie len dorovná správnu geometriu.
+      setTimeout(fit, 250);
+      setTimeout(fit, 700);
+      window.addEventListener("load", fit);
+      if (window.visualViewport) window.visualViewport.addEventListener("resize", fit);
       window.addEventListener("resize", fit);
       window.addEventListener("orientationchange", function(){ setTimeout(fit, 250); });
-      frame.addEventListener("load", function(){ if (splash) splash.className = "hide"; });
+      frame.addEventListener("load", function(){ if (splash) splash.className = "hide"; fit(); });
       frame.src = TARGET;
     });
   }
