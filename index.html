@@ -79,6 +79,27 @@
       var splash = document.getElementById("splash");
       if (!wrap || !frame) return;
       wrap.style.display = "block";
+      // [DEBUG probe — gated na ?debug=1, read-only; odstrániť po diagnóze]
+      var DBG = /[?&]debug=1/.test(location.search) || /debug/.test(location.hash);
+      var dbgEl = null, padLast = {l:0,r:0,t:0,b:0}, wLast = 0, hLast = 0, sLast = 0;
+      if (DBG) {
+        dbgEl = document.createElement("div");
+        dbgEl.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:99999;background:rgba(0,0,0,.88);color:#0f0;font:12px/1.5 ui-monospace,monospace;padding:10px 8px;white-space:pre;pointer-events:none";
+        document.body.appendChild(dbgEl);
+      }
+      function dbgDump(tag){
+        if (!dbgEl) return;
+        var r = frame.getBoundingClientRect();
+        dbgEl.textContent =
+          "[" + tag + "]\n" +
+          "wrap clientW=" + wrap.clientWidth + " clientH=" + wrap.clientHeight + "\n" +
+          "pad L=" + padLast.l + " R=" + padLast.r + " T=" + padLast.t + " B=" + padLast.b + "\n" +
+          "w=" + wLast + " h=" + hLast + " s=" + sLast.toFixed(4) + "\n" +
+          "frame.style w=" + frame.style.width + " h=" + frame.style.height + "\n" +
+          "frame rect top=" + r.top.toFixed(1) + " bottom=" + r.bottom.toFixed(1) + " h=" + r.height.toFixed(1) + "\n" +
+          "win innerH=" + window.innerHeight + " screenH=" + screen.height + "\n" +
+          "visualVP h=" + (window.visualViewport ? window.visualViewport.height.toFixed(1) : "n/a");
+      }
       // [PoC fix] iframe renderuje na DW=980 (default Safari layout width, pre ktorý
       // je trénerské html.m kalibrované) a CSS transformom ho zmenšíme na šírku
       // displeja — replikuje pôvodné GAS-in-Safari prostredie (žiadny pretok do strán).
@@ -98,11 +119,13 @@
         frame.style.height = (h / s) + "px";
         frame.style.transformOrigin = "0 0";
         frame.style.transform = "scale(" + s + ")";
+        padLast = {l:padL, r:padR, t:padT, b:padB}; wLast = w; hLast = h; sLast = s;
+        dbgDump("fit");
       }
       fit();
       window.addEventListener("resize", fit);
       window.addEventListener("orientationchange", function(){ setTimeout(fit, 250); });
-      frame.addEventListener("load", function(){ if (splash) splash.className = "hide"; });
+      frame.addEventListener("load", function(){ if (splash) splash.className = "hide"; setTimeout(function(){ dbgDump("load+600"); }, 600); });
       frame.src = TARGET;
     });
   }
