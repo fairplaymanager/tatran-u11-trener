@@ -84,7 +84,14 @@
       // displeja — replikuje pôvodné GAS-in-Safari prostredie (žiadny pretok do strán).
       var DW = 980;
       function fit(){
-        var w = wrap.clientWidth, h = wrap.clientHeight;
+        // [bottom-nav fix] CONTENT-box rozmery — clientWidth/clientHeight zahŕňajú
+        // safe-area padding shell-u; bez odčítania scaled iframe pretečie
+        // overflow:hidden a fixed-bottom #tabbar sa oreže. Padding čítame z computed
+        // style (parseFloat), NEHARDCODUJEME env() hodnoty.
+        var cs = getComputedStyle(wrap);
+        var padL = parseFloat(cs.paddingLeft) || 0, padR = parseFloat(cs.paddingRight) || 0;
+        var padT = parseFloat(cs.paddingTop) || 0, padB = parseFloat(cs.paddingBottom) || 0;
+        var w = wrap.clientWidth - padL - padR, h = wrap.clientHeight - padT - padB;
         if (!w || !h) return;
         var s = w / DW;
         frame.style.width = DW + "px";
