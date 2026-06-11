@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Tréner U11</title>
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=2">
-<link rel="apple-touch-icon-precomposed" href="apple-touch-icon.png?v=2">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=2">
-<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png?v=2">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=3">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3">
+<link rel="apple-touch-icon-precomposed" href="apple-touch-icon.png?v=3">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=3">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png?v=3">
 <meta name="apple-mobile-web-app-title" content="Tréner U11">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -44,8 +44,8 @@
   #appwrap{position:fixed;inset:0;z-index:1000;display:none;background:#1F8B3F;overflow:hidden;
     padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);
     padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
-  /* spodná safe-area (pod home-indicatorom) = biela, nech ladí s bielym nav barom (nie zelená appwrap bg) */
-  #appwrap::after{content:"";position:absolute;left:0;right:0;bottom:0;height:env(safe-area-inset-bottom,0px);background:#fff;pointer-events:none}
+  /* [2026-06-11] spodná safe-area (pod home-indicatorom) = ZELENÁ (#1F8B3F, ladí so zeleným topbarom = rámuje appku zhora aj zdola; predtým biela). Fero preferencia. */
+  #appwrap::after{content:"";position:absolute;left:0;right:0;bottom:0;height:env(safe-area-inset-bottom,0px);background:#1F8B3F;pointer-events:none}
   /* width/height/transform nastavuje JS (fit) — iframe renderuje na DW px a škáluje
      sa na displej, čím replikuje pôvodné GAS prostredie (html.m kalibrácia). */
   #appframe{display:block;border:0;background:#fff}
@@ -143,7 +143,7 @@
   </div>
 
   <!-- Bežné Safari / standalone bez tokenu: landing page -->
-  <img class="ic" src="apple-touch-icon.png?v=2" alt="U11 Tréner">
+  <img class="ic" src="apple-touch-icon.png?v=3" alt="U11 Tréner">
   <h1>U11 — Tréner</h1>
   <p class="sub">Správa nominácií · FC Tatran Prešov</p>
 
