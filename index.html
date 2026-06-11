@@ -125,7 +125,8 @@
       window.addEventListener("resize", fit);
       window.addEventListener("orientationchange", function(){ setTimeout(fit, 250); });
       frame.addEventListener("load", function(){ if (splash) splash.className = "hide"; if (window.__spi) clearInterval(window.__spi); fit(); });
-      frame.src = TARGET;
+      // [v22.146] cache-bust trener app (client) → vždy čerstvá verzia po deployi
+      frame.src = TARGET + "&_cb=" + Date.now();
     });
   }
 </script>
